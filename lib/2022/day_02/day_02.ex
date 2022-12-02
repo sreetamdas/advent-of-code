@@ -37,10 +37,7 @@ defmodule RockPaperScissors do
     elf_moves()
     |> Enum.map(fn [them, us] ->
       [them, us]
-      |> Enum.map(fn key ->
-        @outcomes
-        |> Map.get(String.to_atom(key))
-      end)
+      |> Enum.map(&Map.get(@outcomes, String.to_atom(&1)))
       |> get_score()
     end)
     |> Enum.sum()
@@ -51,10 +48,7 @@ defmodule RockPaperScissors do
     |> Enum.map(fn [them, us] ->
       our_move =
         [them, us]
-        |> Enum.map(fn key ->
-          @outcomes
-          |> Map.get(String.to_atom(key))
-        end)
+        |> Enum.map(&Map.get(@outcomes, String.to_atom(&1)))
         |> get_outcome()
 
       [Map.get(@outcomes, String.to_atom(them)), our_move]
