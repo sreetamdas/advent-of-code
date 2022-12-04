@@ -1,6 +1,6 @@
 defmodule RockPaperScissors do
   @moduledoc """
-  Solution for Day 2 of Advent of Code 2022: Rock Paper Scissors
+  Solution for Day 2 of Advent of Code 2022
   """
   alias AdventOfCode.Helpers, as: HelperUtils
 

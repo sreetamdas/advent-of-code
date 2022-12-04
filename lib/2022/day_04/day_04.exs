@@ -1,4 +1,8 @@
 defmodule CampCleanup do
+  @moduledoc """
+  Solution for Day 4 of Advent of Code 2022
+  """
+
   def get_input(input),
     do:
       input

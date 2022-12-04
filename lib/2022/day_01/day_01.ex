@@ -1,6 +1,6 @@
-defmodule AdventOfCode.Year2022.Day01 do
+defmodule CalorieCounting do
   @moduledoc """
-  Solution for Day 1 of Advent of Code 2022: Calorie Counting
+  Solution for Day 1 of Advent of Code 2022
   """
   alias AdventOfCode.Helpers, as: HelperUtils
 

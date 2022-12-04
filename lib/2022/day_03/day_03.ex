@@ -1,6 +1,6 @@
 defmodule RucksackReorganization do
   @moduledoc """
-  Solution for Day 3 of Advent of Code 2022: Rucksack Reorganization
+  Solution for Day 3 of Advent of Code 2022
   """
   alias AdventOfCode.Helpers, as: HelperUtils
 
