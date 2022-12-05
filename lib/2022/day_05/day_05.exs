@@ -23,7 +23,7 @@ defmodule SupplyStacks do
 
     stacks =
       stacks_cleaned
-      |> Enum.reduce(Map.new(), fn row, row_map ->
+      |> Enum.reduce(%{}, fn row, row_map ->
         parsed_row =
           row
           # process each row
@@ -37,7 +37,7 @@ defmodule SupplyStacks do
                 %{}
 
               _ ->
-                Map.new()
+                %{}
                 |> Map.put(index + 1, [crate | stack_actual])
             end
           end)
@@ -52,10 +52,10 @@ defmodule SupplyStacks do
     moves =
       moves_raw
       |> String.split("\n")
-      |> Enum.map(
-        &(Regex.run(~r"move (\d+) from (\d+) to (\d+)", &1)
-          |> then(fn [_ | str] -> str |> Enum.map(fn num -> String.to_integer(num) end) end))
-      )
+      |> Enum.map(fn instruction ->
+        Regex.run(~r"move (\d+) from (\d+) to (\d+)", instruction)
+        |> then(fn [_ | str] -> str |> Enum.map(&String.to_integer(&1)) end)
+      end)
 
     [stacks, moves]
   end
@@ -98,6 +98,7 @@ defmodule SupplyStacks do
   end
 
   def part_1(input), do: solve(input, &Enum.reverse/1)
+  # part 2 is without any reversing
   def part_2(input), do: solve(input, &Function.identity/1)
 end
 
