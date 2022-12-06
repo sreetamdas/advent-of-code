@@ -10,21 +10,20 @@ defmodule TuningTrouble do
     do:
       input
       |> String.trim_trailing()
-      |> String.split("\n")
-      |> Enum.flat_map(fn x -> x |> String.codepoints() end)
+      |> String.graphemes()
 
   defp scan_signal(signal, scan_size) do
     signal
-    |> Enum.chunk_every(scan_size, 1)
+    |> Enum.chunk_every(scan_size, 1, :discard)
     |> Enum.reduce_while(scan_size, fn chunk, res ->
       chunk
       |> Enum.uniq()
-      |> then(fn scanned ->
-        case Enum.count(scanned) do
+      |> then(
+        &case Enum.count(&1) do
           ^scan_size -> {:halt, res}
           _ -> {:cont, res + 1}
         end
-      end)
+      )
     end)
   end
 
