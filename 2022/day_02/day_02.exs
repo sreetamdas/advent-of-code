@@ -2,8 +2,6 @@ defmodule RockPaperScissors do
   @moduledoc """
   Solution for Day 2 of Advent of Code 2022
   """
-  alias AdventOfCode.Helpers, as: HelperUtils
-
   @outcomes %{
     A: 1,
     B: 2,
@@ -25,26 +23,27 @@ defmodule RockPaperScissors do
   defp get_outcome([2, 3]), do: 3
   defp get_outcome([them, 3]), do: rem(them + 1, 3)
 
-  def elf_moves(),
+  def elf_moves(input),
     do:
-      __DIR__
-      |> Path.join("input.txt")
-      |> HelperUtils.file_input()
+      input
       |> String.split([" ", "\n"], trim: true)
       |> Enum.chunk_every(2)
 
-  def part_1 do
-    elf_moves()
+  def part_1(input) do
+    input
+    |> elf_moves()
     |> Enum.map(fn [them, us] ->
       [them, us]
       |> Enum.map(&Map.get(@outcomes, String.to_atom(&1)))
       |> get_score()
     end)
     |> Enum.sum()
+    |> IO.inspect()
   end
 
-  def part_2 do
-    elf_moves()
+  def part_2(input) do
+    input
+    |> elf_moves()
     |> Enum.map(fn [them, us] ->
       our_move =
         [them, us]
@@ -55,9 +54,11 @@ defmodule RockPaperScissors do
       |> get_score()
     end)
     |> Enum.sum()
-  end
-
-  def answers do
-    %{part_1: part_1(), part_2: part_2()}
+    |> IO.inspect()
   end
 end
+
+input = File.read!("input.txt")
+
+RockPaperScissors.part_1(input)
+RockPaperScissors.part_2(input)

@@ -2,13 +2,10 @@ defmodule RucksackReorganization do
   @moduledoc """
   Solution for Day 3 of Advent of Code 2022
   """
-  alias AdventOfCode.Helpers, as: HelperUtils
 
-  def get_input(),
+  def get_input(input),
     do:
-      __DIR__
-      |> Path.join("input.txt")
-      |> HelperUtils.file_input()
+      input
       |> String.split("\n", trim: true)
 
   def get_priority(char),
@@ -24,8 +21,9 @@ defmodule RucksackReorganization do
         end
       end)
 
-  def part_1() do
-    get_input()
+  def part_1(input) do
+    input
+    |> get_input()
     |> Enum.map(fn str ->
       [bag_1, bag_2] =
         str
@@ -44,10 +42,12 @@ defmodule RucksackReorganization do
       |> get_priority()
     end)
     |> Enum.sum()
+    |> IO.puts()
   end
 
-  def part_2() do
-    get_input()
+  def part_2(input) do
+    input
+    |> get_input()
     |> Enum.chunk_every(3)
     |> Enum.map(fn bag ->
       [first, second, third] =
@@ -64,7 +64,11 @@ defmodule RucksackReorganization do
       |> get_priority()
     end)
     |> Enum.sum()
+    |> IO.puts()
   end
-
-  def answers, do: %{part_1: part_1(), part_2: part_2()}
 end
+
+input = File.read!("input.txt")
+
+RucksackReorganization.part_1(input)
+RucksackReorganization.part_2(input)
