@@ -84,10 +84,7 @@ defmodule SupplyStacks do
     do:
       map
       |> Map.values()
-      |> Enum.reduce("", fn stack, top ->
-        top
-        |> then(&"#{&1}#{List.last(stack)}")
-      end)
+      |> Enum.reduce("", &"#{&2}#{List.last(&1)}")
 
   defp solve(input, order_crates) do
     input
