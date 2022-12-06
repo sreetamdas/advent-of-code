@@ -18,12 +18,11 @@ defmodule TuningTrouble do
     |> Enum.reduce_while(scan_size, fn chunk, res ->
       chunk
       |> Enum.uniq()
-      |> then(
-        &case Enum.count(&1) do
-          ^scan_size -> {:halt, res}
-          _ -> {:cont, res + 1}
-        end
-      )
+      |> Enum.count()
+      |> case do
+        ^scan_size -> {:halt, res}
+        _ -> {:cont, res + 1}
+      end
     end)
   end
 
