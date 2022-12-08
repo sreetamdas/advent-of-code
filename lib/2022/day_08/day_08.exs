@@ -62,18 +62,18 @@ defmodule TreetopTreeHouse do
     end)
   end
 
-  defp compute_trees(input, visiblity_func, score_fn) do
+  defp compute_trees(input, visiblity_fn, score_fn) do
     visibility_horizontal =
       input
-      |> Enum.map(&visiblity_func.(&1))
+      |> Enum.map(&visiblity_fn.(&1))
 
     visibility_vertical =
       input
       |> Enum.zip_with(& &1)
-      |> Enum.map(&visiblity_func.(&1))
+      |> Enum.map(&visiblity_fn.(&1))
+      |> Enum.zip_with(& &1)
 
     visibility_vertical
-    |> Enum.zip_with(& &1)
     |> Enum.with_index(fn vertical_row, index ->
       visibility_horizontal
       |> Enum.at(index)
