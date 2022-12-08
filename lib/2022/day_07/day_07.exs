@@ -1,4 +1,8 @@
 defmodule NoSpaceLeftOnDevice do
+  @moduledoc """
+  Solution for Day 7 of Advent of Code 2022
+  """
+
   @total_disk_space 70_000_000
   @update_size 30_000_000
 
