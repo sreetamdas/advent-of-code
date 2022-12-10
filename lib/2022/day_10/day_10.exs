@@ -36,11 +36,13 @@ defmodule CathodeRayTube do
     |> Enum.with_index(&{&2 + 1, &1})
     |> Enum.slice(19..-1//1)
     |> Enum.take_every(40)
-    |> Enum.reduce(0, &(&2 + elem(&1, 0) * elem(&1, 1)))
+    |> Enum.reduce(0, &(elem(&1, 0) * elem(&1, 1) + &2))
     |> IO.inspect(label: "part_1")
   end
 
   def part_2(input) do
+    IO.puts("part_2")
+
     input
     |> parse_input()
     |> construct_cycles()
@@ -52,14 +54,13 @@ defmodule CathodeRayTube do
       &Enum.reduce(&1, "", fn {position, register}, output ->
         cond do
           position in (register - 1)..(register + 1) -> output <> "#"
-          true -> output <> "."
+          true -> output <> " "
         end
       end)
     )
     # remove the extra noop offset we'd added at the start
     |> Enum.drop(-1)
     |> Enum.map(&IO.puts(&1))
-    |> IO.inspect(label: "part_2")
   end
 end
 
