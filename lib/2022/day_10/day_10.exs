@@ -11,22 +11,22 @@ defmodule CathodeRayTube do
             {:noop}
 
           ["addx", value] ->
-            [{:addx_pause}, {:addx, String.to_integer(value)}]
+            [{:noop}, {:addx, String.to_integer(value)}]
         end)
     )
     |> List.flatten()
   end
 
   defp construct_cycles(signals) do
+    # offset by one
     [{:noop} | signals]
-    |> Enum.scan(@initial, fn signal, acc_value ->
-      signal
-      |> case do
-        {:noop} -> acc_value
-        {:addx_pause} -> acc_value
-        {:addx, value} -> acc_value + value
+    |> Enum.scan(
+      @initial,
+      &case &1 do
+        {:noop} -> &2
+        {:addx, value} -> &2 + value
       end
-    end)
+    )
   end
 
   def part_1(input) do
@@ -36,7 +36,7 @@ defmodule CathodeRayTube do
     |> Enum.with_index(&{&2 + 1, &1})
     |> Enum.slice(19..-1//1)
     |> Enum.take_every(40)
-    |> Enum.reduce(0, fn {index, value}, sum -> sum + value * index end)
+    |> Enum.reduce(0, &(&2 + elem(&1, 0) * elem(&1, 1)))
     |> IO.inspect(label: "part_1")
   end
 
@@ -56,7 +56,7 @@ defmodule CathodeRayTube do
         end
       end)
     )
-    # remove the extra noop we'd added at the start
+    # remove the extra noop offset we'd added at the start
     |> Enum.drop(-1)
     |> Enum.map(&IO.puts(&1))
     |> IO.inspect(label: "part_2")
