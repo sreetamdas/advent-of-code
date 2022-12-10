@@ -11,29 +11,15 @@ defmodule CathodeRayTube do
             {:noop}
 
           ["addx", value] ->
-            {:addx, String.to_integer(value)}
+            [{:addx_pause}, {:addx, String.to_integer(value)}]
         end)
     )
-  end
-
-  defp repeat_signal(signal) do
-    signal
-    |> case do
-      {:noop} ->
-        signal
-
-      {:addx, value} ->
-        [{:addx_pause}, {:addx, value}]
-    end
+    |> List.flatten()
   end
 
   defp construct_cycles(signals) do
-    cycles =
-      signals
-      |> Enum.map(&repeat_signal/1)
-      |> List.flatten()
-
-    Enum.scan([{:noop} | cycles], @initial, fn signal, acc_value ->
+    [{:noop} | signals]
+    |> Enum.scan(@initial, fn signal, acc_value ->
       signal
       |> case do
         {:noop} -> acc_value
