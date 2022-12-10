@@ -27,3 +27,6 @@ advent_of_code-*.tar
 
 # Livebook
 *.livemd
+
+# input files
+input*.txt
