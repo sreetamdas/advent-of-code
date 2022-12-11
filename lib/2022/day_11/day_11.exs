@@ -13,8 +13,8 @@ defmodule MonkeyInTheMiddle do
     |> then(fn [operation, right] ->
       operation
       |> case do
-        "+" -> fn x -> Kernel.+(x, parse_operands(right, x)) end
-        "*" -> fn x -> Kernel.*(x, parse_operands(right, x)) end
+        "+" -> &Kernel.+(&1, parse_operands(right, &1))
+        "*" -> &Kernel.*(&1, parse_operands(right, &1))
       end
     end)
   end
@@ -35,67 +35,57 @@ defmodule MonkeyInTheMiddle do
             |> String.to_integer()
         end
 
-      monkey_init = %{:inspections => 0}
-
       monkey_details =
         monkey_details_raw
-        |> Enum.reduce(monkey_init, fn info, monkey_info ->
-          info
-          |> case do
-            "Starting items: " <> items ->
-              monkey_info
-              |> Map.put(
-                :items,
-                items
-                |> String.split(", ")
-                |> Enum.map(&String.to_integer(&1))
-              )
+        |> Enum.reduce(
+          %{:inspections => 0},
+          fn info, monkey_info ->
+            case info do
+              "Starting items: " <> items ->
+                monkey_info
+                |> Map.put(
+                  :items,
+                  items |> String.split(", ") |> Enum.map(&String.to_integer(&1))
+                )
 
-            "Operation: new = old " <> instruction ->
-              monkey_info
-              |> Map.put(
-                :operation,
-                instruction
-                |> parse_operation()
-              )
+              "Operation: new = old " <> instruction ->
+                Map.put(monkey_info, :operation, instruction |> parse_operation())
 
-            "Test: divisible by " <> divisor ->
-              monkey_info
-              |> Map.put(:test_divisor, String.to_integer(divisor))
+              "Test: divisible by " <> divisor ->
+                Map.put(monkey_info, :test_divisor, String.to_integer(divisor))
 
-            "If true: throw to monkey " <> to_monkey_index ->
-              monkey_info
-              |> Map.put(:test_true, String.to_integer(to_monkey_index))
+              "If true: throw to monkey " <> to_monkey_index ->
+                Map.put(monkey_info, :test_true, String.to_integer(to_monkey_index))
 
-            "If false: throw to monkey " <> to_monkey_index ->
-              monkey_info
-              |> Map.put(:test_false, String.to_integer(to_monkey_index))
+              "If false: throw to monkey " <> to_monkey_index ->
+                Map.put(monkey_info, :test_false, String.to_integer(to_monkey_index))
 
-            _ ->
-              monkey_info
+              _ ->
+                monkey_info
+            end
           end
-        end)
+        )
 
       all_monkeys |> Map.put(monkey_index, monkey_details)
     end)
   end
 
-  defp carry_out_operation(monkey_details, relief_func, common_divisor) do
-    %{
-      :items => items,
-      :operation => operation,
-      :test_divisor => test_divisor,
-      :test_true => test_true,
-      :test_false => test_false
-    } =
-      monkey_details
-      |> Map.take([:items, :operation, :test_divisor, :test_true, :test_false])
-
+  defp carry_out_operation(
+         %{
+           :items => items,
+           :operation => operation,
+           :test_divisor => test_divisor,
+           :test_true => test_true,
+           :test_false => test_false
+         },
+         relief_func,
+         common_divisor
+       ) do
     items
     |> Enum.map(fn item ->
       item
       |> operation.()
-      # part_2
+      # For part 2, whether we divide by 3 or not
       |> relief_func.()
       |> floor()
       |> then(fn updated_worry_level ->
@@ -173,7 +163,7 @@ defmodule MonkeyInTheMiddle do
     |> Enum.map(&Map.get(&1, :inspections))
     |> Enum.sort(&(&1 >= &2))
     |> Enum.take(2)
-    |> then(fn [first, second] -> first * second end)
+    |> Enum.product()
   end
 
   def part_1(input) do
