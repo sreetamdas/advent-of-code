@@ -11,22 +11,21 @@ defmodule CubeConundrum do
     |> Enum.map(fn game ->
       game
       |> String.split(":")
-      |> Enum.drop(1)
-      |> Enum.at(0)
+      |> Enum.at(1)
       |> String.split(";", trim: true)
-      |> Enum.map(fn cubes ->
-        cubes
-        |> String.split(",", trim: true)
-        |> Enum.map(&parse_cubes/1)
-      end)
+      |> Enum.map(&parse_cubes/1)
     end)
   end
 
   def parse_cubes(cubes) do
-    [count_str, color_str] =
-      String.split(cubes, " ", trim: true)
-
-    {String.to_integer(count_str), String.to_atom(color_str)}
+    cubes
+    |> String.split([",", " "], trim: true)
+    |> Enum.chunk_every(2)
+    |> then(
+      &Enum.map(&1, fn [count_str, color_str] ->
+        {String.to_integer(count_str), String.to_atom(color_str)}
+      end)
+    )
   end
 
   def check_round({input, game_id}) do
@@ -46,7 +45,7 @@ defmodule CubeConundrum do
   def get_minimum_cubes(input) do
     input
     |> List.flatten()
-    |> Enum.group_by(fn {_, color} -> color end, fn {count, _} -> count end)
+    |> Enum.group_by(&elem(&1, 1), &elem(&1, 0))
     |> Map.to_list()
     |> Enum.map(fn {_color, count} -> Enum.max(count) end)
     |> Enum.product()
@@ -70,7 +69,7 @@ defmodule CubeConundrum do
   end
 end
 
-input = File.read!("input.txt")
+input = Kino.Input.read(input_raw)
 
 CubeConundrum.part_1(input)
 CubeConundrum.part_2(input)
