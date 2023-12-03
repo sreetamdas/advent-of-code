@@ -1,8 +1,9 @@
-defmodule GearRatios do
+defmodule Gear do
   def parse_input(input) do
     input
     |> String.split("\n", trim: true)
-    |> Enum.map(fn line ->
+    |> Enum.with_index()
+    |> Enum.map(fn {line, index} ->
       number_ranges =
         Regex.scan(~r/\d+/, line, return: :index)
         |> Enum.map(fn [{start, length}] -> {start, start + length - 1} end)
@@ -19,16 +20,16 @@ defmodule GearRatios do
         Regex.scan(~r/\*+/, line, return: :index)
         |> Enum.map(fn [{start, _}] -> start end)
 
-      {numbers, number_ranges, symbol_ranges, gear_ranges}
+      {numbers, number_ranges, symbol_ranges, gear_ranges, index}
     end)
   end
 
-  def get_part_numbers({{_numbers, _num_indices, []}, _index}, _), do: []
+  def get_part_numbers({_numbers, _num_indices, [], _index}, _), do: []
 
-  def get_part_numbers({{numbers, number_ranges, symbols}, index}, input) do
+  def get_part_numbers({numbers, number_ranges, symbols, index}, input) do
     Enum.flat_map(symbols, fn symbol_index ->
-      {{above_nums, above_nums_ranges, _}, _} = Enum.at(input, index - 1)
-      {{below_nums, below_nums_ranges, _}, _} = Enum.at(input, index + 1)
+      {above_nums, above_nums_ranges, _, _} = Enum.at(input, index - 1)
+      {below_nums, below_nums_ranges, _, _} = Enum.at(input, index + 1)
 
       found_same_line = check_symbol_neighbours(symbol_index, number_ranges, numbers)
       found_above = check_symbol_neighbours(symbol_index, above_nums_ranges, above_nums)
@@ -52,8 +53,7 @@ defmodule GearRatios do
   def part_1(input) do
     input
     |> parse_input()
-    |> Enum.map(fn {a, b, c, _} -> {a, b, c} end)
-    |> Enum.with_index()
+    |> Enum.map(fn {a, b, c, _, i} -> {a, b, c, i} end)
     |> then(&Enum.flat_map(&1, fn line -> get_part_numbers(line, &1) end))
     |> Enum.sum()
     |> IO.inspect(label: "part_1")
@@ -62,13 +62,10 @@ defmodule GearRatios do
   def part_2(input) do
     input
     |> parse_input()
-    |> Enum.map(fn {a, b, _, d} -> {a, b, d} end)
-    |> Enum.with_index()
+    |> Enum.map(fn {a, b, _, d, i} -> {a, b, d, i} end)
     |> then(
       &Enum.flat_map(&1, fn line ->
-        line
-        |> get_part_numbers(&1)
-        |> case do
+        case get_part_numbers(line, &1) do
           [one, two] -> [one * two]
           _ -> []
         end
