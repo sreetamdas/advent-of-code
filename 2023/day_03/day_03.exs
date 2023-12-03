@@ -1,4 +1,4 @@
-defmodule Gear do
+defmodule GearRatios do
   def parse_input(input) do
     input
     |> String.split("\n", trim: true)
