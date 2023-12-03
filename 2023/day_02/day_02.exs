@@ -69,7 +69,7 @@ defmodule CubeConundrum do
   end
 end
 
-input = Kino.Input.read(input_raw)
+input = File.read!("input.txt")
 
 CubeConundrum.part_1(input)
 CubeConundrum.part_2(input)
