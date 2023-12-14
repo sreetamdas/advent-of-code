@@ -26,10 +26,10 @@ defmodule HotSprings do
         cond do
           # segments remaining to be matched
           current_block_len == 0 and length(known) > 0 ->
-            check_recursively(rest_input, known, 1)
+            solve(rest_input, known, 1)
 
           Enum.at(known, 0) > current_block_len ->
-            check_recursively(rest_input, known, current_block_len + 1)
+            solve(rest_input, known, current_block_len + 1)
 
           true ->
             0
@@ -38,16 +38,16 @@ defmodule HotSprings do
       "?" ->
         cond do
           current_block_len == 0 and known == [] ->
-            check_recursively(rest_input, [], 0)
+            solve(rest_input, [], 0)
 
           current_block_len == 0 ->
-            check_recursively(rest_input, known, 1) + check_recursively(rest_input, known, 0)
+            solve(rest_input, known, 1) + solve(rest_input, known, 0)
 
           current_block_len == Enum.at(known, 0) ->
-            check_recursively(rest_input, Enum.drop(known, 1), 0)
+            solve(rest_input, Enum.drop(known, 1), 0)
 
           Enum.at(known, 0) > current_block_len ->
-            check_recursively(rest_input, known, current_block_len + 1)
+            solve(rest_input, known, current_block_len + 1)
 
           true ->
             0
@@ -56,10 +56,10 @@ defmodule HotSprings do
       "." ->
         cond do
           current_block_len == 0 ->
-            check_recursively(rest_input, known, 0)
+            solve(rest_input, known, 0)
 
           current_block_len == Enum.at(known, 0) ->
-            check_recursively(rest_input, Enum.drop(known, 1), 0)
+            solve(rest_input, Enum.drop(known, 1), 0)
 
           true ->
             0
@@ -67,12 +67,19 @@ defmodule HotSprings do
     end
   end
 
-  defp check_recursively(_, _, _), do: 0
-
   defp solve(input, known, current_block_len) do
-    # cache
+    case :ets.lookup(:aoc_2023_day_12, {input, known, current_block_len}) do
+      [] ->
+        check_recursively(input, known, current_block_len)
+        |> then(fn res ->
+          :ets.insert(:aoc_2023_day_12, {{input, known, current_block_len}, res})
 
-    check_recursively(input, known, current_block_len)
+          res
+        end)
+
+      [{_, res}] ->
+        res
+    end
   end
 
   def part_1(input) do
@@ -82,10 +89,23 @@ defmodule HotSprings do
     |> Enum.sum()
     |> IO.inspect(label: "part_1")
   end
+
+  def part_2(input) do
+    input
+    |> parse_input()
+    |> Enum.map(fn {input, known} ->
+      {List.flatten(List.duplicate(input, 5) |> Enum.intersperse("?")),
+       List.flatten(List.duplicate(known, 5))}
+    end)
+    |> Enum.map(fn {input, known} -> solve(input, known, 0) end)
+    |> Enum.sum()
+    |> IO.inspect(label: "part_2")
+  end
 end
 
-input = Kino.Input.read(input_raw)
+input = File.read!("input.txt")
 
+:ets.new(:aoc_2023_day_12, [:named_table])
 HotSprings.part_1(input)
-# HotSprings.check({"#.#.###", [1, 1, 3]})
-# HotSprings.part_2(input)
+HotSprings.part_2(input)
+:ets.delete(:aoc_2023_day_12)
