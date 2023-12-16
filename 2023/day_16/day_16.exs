@@ -5,7 +5,7 @@ defmodule TheFloorWillBeLava do
     |> Enum.map(&String.graphemes/1)
   end
 
-  defp print(input) do
+  defp mark_energized_tiles(input) do
     input
     |> Enum.map(fn row ->
       row
@@ -13,7 +13,6 @@ defmodule TheFloorWillBeLava do
         {_, [_ | _]} -> "#"
         _ -> "."
       end)
-      |> IO.inspect()
     end)
   end
 
@@ -27,10 +26,9 @@ defmodule TheFloorWillBeLava do
   @directions [:right, :bottom, :left, :top]
 
   defp handle_encounter(obj, direction) do
-    spot = if is_tuple(obj), do: elem(obj, 0), else: obj
+    tile = if is_tuple(obj), do: elem(obj, 0), else: obj
 
-    # returns step to next spot
-    case {spot, direction} do
+    case {tile, direction} do
       {".", dir} when dir in @directions ->
         [move(dir)]
 
@@ -77,28 +75,20 @@ defmodule TheFloorWillBeLava do
   defp mark_seen(grid, pos = {x, y}, direction) do
     cond do
       already_seen?(grid, pos, direction) ->
-        # IO.inspect(pos, label: "already seen in mark seen")
-
         grid
 
       true ->
-        current_spot = get_at(grid, pos)
+        current_tile = get_at(grid, pos)
 
-        updated_spot =
-          case current_spot do
-            {spot, directions} when is_list(directions) -> {spot, [direction | directions]}
-            spot when is_bitstring(spot) -> {spot, [direction]}
-            _ -> IO.inspect("invariant!!!!!!!!")
+        updated_tile =
+          case current_tile do
+            {tile, directions} when is_list(directions) -> {tile, [direction | directions]}
+            tile when is_bitstring(tile) -> {tile, [direction]}
           end
-
-        # IO.inspect(updated_spot,
-        #   label:
-        #     "marking #{if is_tuple(current_spot), do: Tuple.to_list(current_spot) |> List.flatten() |> Enum.join(","), else: current_spot} #{Tuple.to_list(pos) |> Enum.join(",")} dir: #{direction}"
-        # )
 
         grid
         |> Enum.at(x)
-        |> List.replace_at(y, updated_spot)
+        |> List.replace_at(y, updated_tile)
         |> then(&List.replace_at(grid, x, &1))
     end
   end
@@ -117,11 +107,9 @@ defmodule TheFloorWillBeLava do
 
     cond do
       x < 0 or y < 0 or x > max_x or y > max_y ->
-        # IO.inspect(pos, label: "out of bounds")
         grid
 
       already_seen?(grid, pos, direction) ->
-        # IO.inspect(pos, label: "already seen")
         grid
 
       true ->
@@ -134,35 +122,56 @@ defmodule TheFloorWillBeLava do
           |> Enum.reduce(marked_grid, fn {new_x, new_y, new_direction}, updated_grid ->
             new_pos = {x + new_x, y + new_y}
 
-            # IO.inspect(
-            #   "at {#{x}, #{y}} new: #{Tuple.to_list(new_pos) |> Enum.join(",")} new_dir: #{new_direction}"
-            # )
-
             updated_grid
             |> walk(new_pos, new_direction)
-
-            # |> dbg()
           end)
         end)
     end
+  end
+
+  defp get_all_possible_starting_orientations(grid) do
+    grid
+    |> get_grid_dimensions()
+    |> then(fn {max_x, max_y} ->
+      for i <- 0..max_x do
+        [{i, 0, :right}, {i, max_y, :left}, {0, i, :bottom}, {max_y, i, :top}]
+      end
+      |> List.flatten()
+    end)
   end
 
   def part_1(input) do
     input
     |> parse_input()
     |> walk()
-    |> print()
+    |> mark_energized_tiles()
     |> Enum.join()
     |> String.graphemes()
     |> Enum.count(&(&1 == "#"))
     |> IO.inspect(label: "part_1")
   end
 
-  # def part_2(input) do
-  # end
+  def part_2(input) do
+    parsed_input =
+      input
+      |> parse_input()
+
+    parsed_input
+    |> get_all_possible_starting_orientations()
+    |> Enum.map(fn {x, y, dir} ->
+      parsed_input
+      |> walk({x, y}, dir)
+      |> mark_energized_tiles()
+      |> Enum.join()
+      |> String.graphemes()
+      |> Enum.count(&(&1 == "#"))
+    end)
+    |> Enum.max()
+    |> IO.inspect(label: "part_2")
+  end
 end
 
 input = File.read!("input.txt")
 
 TheFloorWillBeLava.part_1(input)
-# TheFloorWillBeLava.part_2(input)
+TheFloorWillBeLava.part_2(input)
