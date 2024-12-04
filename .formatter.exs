@@ -4,5 +4,5 @@
     "{mix,.formatter}.exs",
     "{config,lib,test,2015,2022,2023,2024}/**/*.{ex,exs}"
   ],
-  line_length: 60
+  line_length: 100
 ]
