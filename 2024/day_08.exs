@@ -131,3 +131,13 @@ end
 input = File.read!("input_08.txt")
 ResonantCollinearity.part_1(input)
 ResonantCollinearity.part_2(input)
+
+# Benchee
+##### With input puzzle #####
+# Name             ips        average  deviation         median         99th %
+# part_1        1.64 K        0.61 ms    ±17.87%        0.60 ms        0.83 ms
+# part_2        0.68 K        1.46 ms    ±17.43%        1.44 ms        1.65 ms
+
+# Comparison:
+# part_1        1.64 K
+# part_2        0.68 K - 2.40x slower +0.85 ms
