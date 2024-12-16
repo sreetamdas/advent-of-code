@@ -5,8 +5,7 @@ defmodule AdventOfCode.Helpers do
   end
 
   def plop([year, day]) do
-    [File.cwd!()]
-    |> Enum.concat([year, "day_#{day}"])
+    [File.cwd!(), year]
     |> Path.join()
     |> then(fn folder_path ->
       folder_path
@@ -16,7 +15,7 @@ defmodule AdventOfCode.Helpers do
           Mix.shell().error(reason)
 
         :ok ->
-          ["input.txt", "day_#{day}.exs"]
+          ["input_#{day}.txt", "day_#{day}.exs"]
           |> Enum.map(&Path.join([folder_path, &1]))
           |> Enum.each(&File.touch!/1)
       end
