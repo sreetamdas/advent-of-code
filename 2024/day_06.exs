@@ -147,6 +147,10 @@ defmodule GuardGallivant do
   end
 end
 
-input = File.read!("input.txt")
+input = File.read!("input_06.txt")
 
 GuardGallivant.solve(input)
+# Benchee
+##### With input puzzle #####
+# Name            ips        average  deviation         median         99th %
+# solve          0.71         1.41 s     ±8.18%         1.39 s         1.53 s
