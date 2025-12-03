@@ -1,6 +1,15 @@
 defmodule AdventOfCode.Helpers do
-  def file_input(path) do
-    path
+  def file_input(file) do
+    day =
+      file
+      |> Path.basename()
+      |> String.split("_")
+      |> Enum.at(1)
+      |> String.replace(".exs", "")
+
+    file
+    |> Path.dirname()
+    |> Path.join("input_#{day}.txt")
     |> File.read!()
   end
 
@@ -15,7 +24,9 @@ defmodule AdventOfCode.Helpers do
           Mix.shell().error(reason)
 
         :ok ->
-          ["input_#{day}.txt", "day_#{day}.exs"]
+          day
+          |> String.pad_leading(2, "0")
+          |> then(&["input_#{&1}.txt", "day_#{&1}.exs"])
           |> Enum.map(&Path.join([folder_path, &1]))
           |> Enum.each(&File.touch!/1)
       end
