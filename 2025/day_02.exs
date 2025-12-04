@@ -1,6 +1,7 @@
 defmodule GiftShop do
   defp parse_input(lines) do
     lines
+    |> String.trim()
     |> String.split(",")
     |> Enum.map(fn range ->
       range
