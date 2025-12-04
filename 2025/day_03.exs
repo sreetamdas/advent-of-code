@@ -24,21 +24,16 @@ defmodule Lobby do
           |> then(fn slice ->
             slice
             |> Enum.max_by(&elem(&1, 0), fn -> {Enum.at(list, 0), start} end)
-            |> then(fn
+            |> case do
+              {curr_max_num, _} when finish == -1 ->
+                [curr_max_num | list]
+                |> Enum.reverse()
+                |> Integer.undigits()
+                |> then(&{:halt, &1})
+
               {curr_max_num, curr_max_index} ->
-                cond do
-                  finish == -1 ->
-                    max_num =
-                      [curr_max_num | list]
-                      |> Enum.reverse()
-                      |> Integer.undigits()
-
-                    {:halt, max_num}
-
-                  true ->
-                    {:cont, {{curr_max_index + 1, finish + 1}, [curr_max_num | list]}}
-                end
-            end)
+                {:cont, {{curr_max_index + 1, finish + 1}, [curr_max_num | list]}}
+            end
           end)
         end)
       end)
@@ -50,7 +45,6 @@ defmodule Lobby do
     |> parse_input()
     |> Enum.map(&get_largest_num(&1, 2))
     |> Enum.sum()
-    |> IO.inspect(label: "part_1")
   end
 
   def part_2(input) do
@@ -58,11 +52,20 @@ defmodule Lobby do
     |> parse_input()
     |> Enum.map(&get_largest_num(&1, 12))
     |> Enum.sum()
-    |> IO.inspect(label: "part_2")
   end
 end
 
-input = AdventOfCode.Helpers.file_input(__ENV__.file)
+# ##### With input prod #####
+# Name             ips        average  deviation         median         99th %
+# part_1        877.66        1.14 ms     ±8.53%        1.13 ms        1.24 ms
+# part_2        569.18        1.76 ms     ±1.73%        1.76 ms        1.83 ms
 
-Lobby.part_1(input)
-Lobby.part_2(input)
+# Comparison:
+# part_1        877.66
+# part_2        569.18 - 1.54x slower +0.62 ms
+
+# Memory usage statistics:
+
+# Name      Memory usage
+# part_1         1.66 MB
+# part_2         2.84 MB - 1.71x memory usage +1.19 MB
