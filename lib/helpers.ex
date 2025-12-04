@@ -1,4 +1,6 @@
 defmodule AdventOfCode.Helpers do
+  alias Benchee
+
   def file_input(file) do
     day =
       file
@@ -31,5 +33,22 @@ defmodule AdventOfCode.Helpers do
           |> Enum.each(&File.touch!/1)
       end
     end)
+  end
+
+  def bench(module, _inputs = prod) do
+    Benchee.run(
+      %{
+        "part_1" => &module.part_1/1,
+        "part_2" => &module.part_2/1
+      },
+      warmup: 0,
+      time: 3,
+      memory_time: 2,
+      print: [benchmarking: false, configuration: false],
+      inputs: %{
+        # test: test,
+        prod: prod
+      }
+    )
   end
 end
