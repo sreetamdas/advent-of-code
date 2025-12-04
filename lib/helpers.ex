@@ -41,7 +41,7 @@ defmodule AdventOfCode.Helpers do
         "part_1" => &module.part_1/1,
         "part_2" => &module.part_2/1
       },
-      warmup: 0,
+      warmup: 2,
       time: 3,
       memory_time: 2,
       print: [benchmarking: false, configuration: false],
