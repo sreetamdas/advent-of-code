@@ -14,7 +14,7 @@ defmodule Playground do
     Enum.zip_reduce(x, y, 0, fn i, j, sum -> sum + (i - j) ** 2 end)
   end
 
-  defp connect_junction_box(circuits, {point, a}, {other_point, x}) do
+  defp connect_junction_box(circuits, {_, a}, {_, x}) do
     circuits
     |> Enum.with_index()
     |> then(fn circuits_with_index ->
@@ -61,17 +61,6 @@ defmodule Playground do
           [MapSet.new([a, x]) | circuits]
       end
     end)
-
-    # |> IO.inspect(label: "updated circuits")
-
-    # |> Enum.reduce(fn mapset ->
-    #   mapset
-    #   |> MapSet.member?(a)
-    #   |> MapSet.put(x)
-    # end)
-  end
-
-  defp make_connection(circuits) do
   end
 
   def part_1(input) do
@@ -87,17 +76,12 @@ defmodule Playground do
           shortest_path(point, other_point)
           |> then(&{{point, index}, {other_point, i}, &1})
         end)
-
-        # |> Enum.min_by(fn {_, _, distance} -> distance end)
       end)
       |> List.flatten()
-      # |> Enum.count()
       |> Enum.sort_by(fn {_, _, distance} -> distance end)
     end)
-    # |> Enum.take(10)
     |> Enum.chunk_every(2, 2)
     |> Enum.map(fn [x, _] -> x end)
-    # |> IO.inspect(limit: :infinity)
     |> then(fn points_with_closest ->
       points_with_closest
       |> Enum.reduce_while({0, []}, fn {i, j, _}, {new_conns, circuits} ->
@@ -130,10 +114,8 @@ defmodule Playground do
       end)
       |> List.flatten()
       |> Enum.sort_by(fn {_, _, distance} -> distance end)
-      # |> Enum.take(10)
       |> Enum.chunk_every(2, 2)
       |> Enum.map(fn [x, _] -> x end)
-      # |> IO.inspect(limit: :infinity)
       |> then(fn points_with_closest ->
         init_circuits =
           all_points
@@ -144,7 +126,6 @@ defmodule Playground do
             nil
 
           prev = {circuits, _, [last_processed | _]} when length(circuits) == 1 ->
-            # IO.inspect({last_processed})
             {prev, {:halt, last_processed}}
 
           {circuits, [{i, j, _} | remaining_pairs], processed} = prev ->
