@@ -138,3 +138,18 @@ defmodule MovieTheater do
     |> tap(fn _ -> :ets.delete(:aoc_2025_day_09) end)
   end
 end
+
+# ##### With input prod #####
+# Name             ips        average  deviation         median         99th %
+# part_1         62.08       0.0161 s     ±3.13%       0.0161 s       0.0189 s
+# part_2        0.0460        21.76 s     ±3.03%        21.76 s        22.23 s
+
+# Comparison:
+# part_1         62.08
+# part_2        0.0460 - 1351.02x slower +21.75 s
+
+# Memory usage statistics:
+
+# Name      Memory usage
+# part_1       0.0590 GB
+# part_2       141.59 GB - 2400.80x memory usage +141.53 GB
