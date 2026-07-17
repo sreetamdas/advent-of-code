@@ -8,7 +8,7 @@ defmodule Factory do
     |> Enum.map(fn line ->
       tokens = String.split(line, " ")
       [lights | rest] = tokens
-      {_joltage, buttons} = List.pop_at(rest, -1)
+      {joltage_str, button_strs} = List.pop_at(rest, -1)
 
       goal =
         lights
@@ -21,7 +21,7 @@ defmodule Factory do
         end)
 
       button_masks =
-        Enum.map(buttons, fn btn ->
+        Enum.map(button_strs, fn btn ->
           btn
           |> String.slice(1..-2//1)
           |> String.split(",")
@@ -60,7 +60,12 @@ defmodule Factory do
     |> Enum.sum()
   end
 
-  def part_2(_input) do
-    0
+  def part_2(input) do
+    tmp = Path.join(System.tmp_dir!(), "aoc2025_day10_input.txt")
+    File.write!(tmp, input)
+    script = Path.join(__DIR__, "part2_z3.py")
+    {result, 0} = System.cmd("python3", [script, tmp])
+    {count, _} = Integer.parse(String.trim(result))
+    count
   end
 end
