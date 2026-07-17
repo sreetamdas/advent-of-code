@@ -56,131 +56,127 @@ defmodule Factory do
   end
 
   # ------------------------------------------------------------
-  # Part 2: Valid greedy upper bound + DFS with strong pruning
+  # Part 2: exact solve via Gaussian elimination over the reals,
+  # then bounded enumeration over the free variables.
+  #
+  # Each button press adds 1 to every counter it lists, so the
+  # counts x_j >= 0 must satisfy A·x = targets, minimising Σx_j.
+  # Row-reducing pins most buttons to a single expression; only a
+  # handful of columns stay free (0-3 for this input), and each is
+  # bounded by the smallest target it touches, so we can enumerate
+  # them and verify each candidate exactly with integer arithmetic.
   # ------------------------------------------------------------
 
   defp solve_machine(targets, button_sets) do
+    m = length(targets)
     n = length(button_sets)
-    # Order: larger sets first -> smaller max_x -> tighter search
-    order = 0..(n - 1) |> Enum.sort_by(fn j -> -length(Enum.at(button_sets, j)) end)
-    sorted = Enum.map(order, &Enum.at(button_sets, &1))
+    targets_t = List.to_tuple(targets)
 
-    # Valid greedy upper bound
-    upper = valid_greedy(targets, sorted)
+    matrix =
+      for i <- 0..(m - 1) do
+        row = Enum.map(button_sets, fn set -> if i in set, do: 1.0, else: 0.0 end)
+        row ++ [elem(targets_t, i) * 1.0]
+      end
 
-    dfs(0, sorted, targets, 0, upper)
+    {reduced, pivots} = rref(matrix, n)
+    pivot_cols = MapSet.new(pivots, fn {_r, c} -> c end)
+    free_cols = Enum.reject(0..(n - 1), &MapSet.member?(pivot_cols, &1))
+
+    uppers =
+      Enum.map(free_cols, fn f ->
+        button_sets |> Enum.at(f) |> Enum.map(&elem(targets_t, &1)) |> Enum.min()
+      end)
+
+    pivot_exprs =
+      Enum.map(pivots, fn {pr, pc} ->
+        row = Enum.at(reduced, pr)
+        {pc, Enum.at(row, n), Enum.map(free_cols, fn f -> Enum.at(row, f) end)}
+      end)
+
+    ctx = %{pivot_exprs: pivot_exprs, free_cols: free_cols, sets: button_sets, targets: targets_t, m: m, n: n}
+
+    uppers
+    |> Enum.reduce([[]], fn ub, combos -> for combo <- combos, v <- 0..ub, do: combo ++ [v] end)
+    |> Enum.map(&candidate_cost(&1, ctx))
+    |> Enum.min()
   end
 
-  defp valid_greedy(targets, buttons) do
-    do_greedy(targets, buttons, 0)
+  defp swap(list, i, j) do
+    vi = Enum.at(list, i)
+    vj = Enum.at(list, j)
+    list |> List.replace_at(i, vj) |> List.replace_at(j, vi)
   end
 
-  defp do_greedy(rem, buttons, cost) do
-    if Enum.all?(rem, &(&1 == 0)) do
-      cost
-    else
-      # Find a counter with the fewest remaining buttons, and press its button
-      {i, btns} =
-        rem
-        |> Enum.with_index()
-        |> Enum.filter(fn {r, _} -> r > 0 end)
-        |> Enum.map(fn {_, i} ->
-          affecting =
-            buttons
+  defp rref(rows, n) do
+    {rs, _pr, pivots} =
+      Enum.reduce(0..(n - 1), {rows, 0, []}, fn col, {rs, pr, pivots} ->
+        pivot_idx =
+          rs
+          |> Enum.drop(pr)
+          |> Enum.find_index(fn row -> abs(Enum.at(row, col)) > 1.0e-9 end)
+
+        if pivot_idx == nil do
+          {rs, pr, pivots}
+        else
+          p = pr + pivot_idx
+          rs = swap(rs, pr, p)
+          pivrow = Enum.at(rs, pr)
+          pv = Enum.at(pivrow, col)
+          pivrow = Enum.map(pivrow, &(&1 / pv))
+          rs = List.replace_at(rs, pr, pivrow)
+
+          rs =
+            rs
             |> Enum.with_index()
-            |> Enum.filter(fn {set, _j} -> i in set and Enum.all?(Enum.map(set, fn k -> Enum.at(rem, k) end), &(&1 >= 0)) end)
-            |> Enum.map(fn {_, j} -> j end)
-          {i, affecting}
-        end)
-        |> Enum.min_by(fn {_, btns} -> length(btns) end, fn -> {nil, []} end)
+            |> Enum.map(fn {row, ri} ->
+              if ri == pr do
+                row
+              else
+                f = Enum.at(row, col)
+                Enum.zip_with(row, pivrow, fn a, b -> a - f * b end)
+              end
+            end)
 
-      if i == nil or btns == [] do
-        # Fallback: very loose bound
-        Enum.sum(rem)
-      else
-        # Choose the button with smallest set among options
-        j = Enum.min_by(btns, fn j -> length(Enum.at(buttons, j)) end)
-        set = Enum.at(buttons, j)
-        x = Enum.at(rem, i)
-        new_rem = Enum.map(Enum.with_index(rem), fn {r, k} -> if k in set, do: r - x, else: r end)
-        if Enum.any?(new_rem, &(&1 < 0)) do
-          Enum.sum(rem)
-        else
-          do_greedy(new_rem, buttons, cost + x)
+          {rs, pr + 1, [{pr, col} | pivots]}
         end
-      end
-    end
+      end)
+
+    {rs, Enum.reverse(pivots)}
   end
 
-  defp lower_bound(remaining, cost, idx, buttons) do
-    rem_nonzero = Enum.filter(remaining, &(&1 > 0))
-    if rem_nonzero == [] do
-      cost
+  defp candidate_cost(free_vals, ctx) do
+    pivots =
+      Enum.map(ctx.pivot_exprs, fn {pc, base, coeffs} ->
+        {pc, round(base - dot(coeffs, free_vals))}
+      end)
+
+    if Enum.all?(pivots, fn {_pc, r} -> r >= 0 end) do
+      x =
+        ctx.free_cols
+        |> Enum.zip(free_vals)
+        |> Enum.concat(pivots)
+        |> Enum.reduce(List.duplicate(0, ctx.n), fn {col, v}, acc -> List.replace_at(acc, col, v) end)
+
+      if verify(x, ctx.sets, ctx.targets, ctx.m), do: Enum.sum(x), else: :infinity
     else
-      max_r = Enum.max(rem_nonzero)
-      sum_r = Enum.sum(rem_nonzero)
-      n = length(buttons)
-      max_set =
-        if idx >= n do
-          1
-        else
-          idx..(n - 1)//1
-          |> Enum.map(fn j -> length(Enum.at(buttons, j)) end)
-          |> Enum.max(fn -> 1 end)
-        end
-      lb2 = div(sum_r + max_set - 1, max_set)
-      cost + max(max_r, lb2)
+      :infinity
     end
   end
 
-  defp infeasible?(remaining, idx, buttons) do
-    n = length(buttons)
-    remaining
-    |> Enum.with_index()
-    |> Enum.any?(fn {r, i} ->
-      r > 0 and (idx >= n or not Enum.any?(idx..(n - 1)//1, fn j -> i in Enum.at(buttons, j) end))
-    end)
-  end
+  defp dot(coeffs, vals), do: coeffs |> Enum.zip_with(vals, fn c, v -> c * v end) |> Enum.sum()
 
-  defp dfs(idx, buttons, remaining, cost, best) when idx == length(buttons) do
-    if Enum.all?(remaining, &(&1 == 0)), do: min(cost, best), else: best
-  end
+  defp verify(x, sets, targets, m) do
+    xt = List.to_tuple(x)
 
-  defp dfs(idx, buttons, remaining, cost, best) do
-    if cost >= best do
-      best
-    else
-      lb = lower_bound(remaining, cost, idx, buttons)
-      if lb >= best do
-        best
-      else
-        if infeasible?(remaining, idx, buttons) do
-          best
-        else
-          set = Enum.at(buttons, idx)
-          max_x = Enum.reduce(set, best - cost - 1, fn i, acc -> min(acc, Enum.at(remaining, i)) end)
-          # Descending: try efficient large presses first
-          dfs_branch(max_x, idx, buttons, set, remaining, cost, best)
-        end
-      end
-    end
-  end
+    totals =
+      sets
+      |> Enum.with_index()
+      |> Enum.reduce(:erlang.make_tuple(m, 0), fn {set, j}, acc ->
+        xj = elem(xt, j)
+        Enum.reduce(set, acc, fn i, a -> put_elem(a, i, elem(a, i) + xj) end)
+      end)
 
-  defp dfs_branch(x, _idx, _buttons, _set, _remaining, _cost, best) when x < 0, do: best
-  defp dfs_branch(x, idx, buttons, set, remaining, cost, best) do
-    new_cost = cost + x
-    if new_cost >= best do
-      best
-    else
-      new_rem = Enum.map(Enum.with_index(remaining), fn {r, i} -> if i in set, do: r - x, else: r end)
-      lb = lower_bound(new_rem, new_cost, idx + 1, buttons)
-      if lb >= best do
-        best
-      else
-        result = dfs(idx + 1, buttons, new_rem, new_cost, best)
-        dfs_branch(x - 1, idx, buttons, set, remaining, cost, result)
-      end
-    end
+    Enum.all?(0..(m - 1), fn i -> elem(totals, i) == elem(targets, i) end)
   end
 
   def part_2(input) do
